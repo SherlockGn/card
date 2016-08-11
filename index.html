@@ -1,0 +1,358 @@
+<html>
+<head>
+<script type="text/javascript" src="jquery.min.js"></script>
+</head>
+<body style="width:auto; background-color:green; z-index:-2; overflow-x:hidden">
+</body>
+</html>
+<script>
+var matrix = new Array(10);
+var drop = new Array();
+var attributes = new Array();
+var selectMode = false;
+var pos = null;
+for(var i = 0; i < 10; i++) {
+    matrix[i] = new Array();
+}
+for(var i = 0; i < 104; i++) {
+    drop[i] = i;
+    attributes[i] = {select: false, number: i % 13 + 1, stage: false, open: false};
+}
+
+// reverseArray(drop);
+var fakeCards = new Array();
+
+
+function init() {
+    var dealCard = $(cardString(-1));
+    $("body").append(dealCard);
+    setNumber(dealCard, 14);
+    setPositionIndex(dealCard, -1, -1);
+    dealCard.click(function() {
+        dealAnime(0, 10, function() {if(drop.length <= 0) dealCard.css("display", "none");});
+        if(pos !== null) {cancelAllSelected(pos); selectMode = false;}
+    });
+    for(var i = 0; i < 10; i++) {
+        var fakeCard = $(fakeCardString(10000 + i));
+        $("body").append(fakeCard);
+        fakeCard.css("background-color", "green");
+        fakeCard.css("border", "2px dashed white");
+        var ppos = calculatePosition(i, 0);
+        setPosition(fakeCard, ppos.x, ppos.y);
+        
+        setZIndex(fakeCard, 0);
+        fakeCard.click(fakeCardClickFunction);
+    }
+    console.log(pos);
+}
+
+function deal(n1/*closed*/, n2/*open*/) {
+    for(var i = 0; i < n1 + n2; i++) {
+        var open = !(i < n1);
+        var id = drop.shift();
+        matrix[i % 10].push(id);
+        attributes[id].stage = true;
+        attributes[id].open = open;
+    }
+}
+
+function dealAnimeRecursion(i, n1, n2, func) {
+    if(i >= n1 + n2) return;
+    var open = !(i < n1);
+    var id = drop.shift();
+    matrix[i % 10].push(id);
+    attributes[id].stage = true;
+    attributes[id].open = open;
+    
+    var x = i % 10, y = matrix[x].length - 1;
+    var card = $(cardString(id));
+    $("body").append(card);
+    setNumber(card, attributes[id].open? attributes[id].number: 14);
+    setZIndex(card, y + 1);
+    setPositionIndex(card, -1, -1);
+    moveToIndex(card, x, y, /*800*/100, i === n1 + n2 - 1? func: function(){});
+    
+    card.click(clickFunction);
+    
+    setTimeout(function() {dealAnimeRecursion(i + 1, n1, n2, func)}, /*150*/100);
+}
+
+function dealAnime(n1/*closed*/, n2/*open*/, func) {
+    dealAnimeRecursion(0, n1, n2, func);
+}
+
+function moveAnimeRecursion(i, fromx, tox, number, func) {
+    if(i >= number) return;
+    var toDeleteIndex = matrix[fromx].length - number + i;
+    var toDeleteId = matrix[fromx][toDeleteIndex];
+    matrix[fromx].splice(toDeleteIndex, 1);
+    matrix[tox].push(toDeleteId);
+    
+    var newPos = calculatePosition(tox, matrix[tox].length - 1);
+    var card = $("#card" + toDeleteId);
+    setZIndex(card, matrix[tox].length);
+    moveTo(card, newPos.x, newPos.y, /*500*/0, i === number - 1? func: function(){});
+    moveAnimeRecursion(i + 1, fromx, tox, number, func);
+}
+
+function moveAnime(fromx, tox, number, func) {
+    moveAnimeRecursion(0, fromx, tox, number, func);
+}
+
+function clickFunction() {
+    var card = $(this);
+    var id = getId(card);
+//    console.log(id + ", z-index: " + getZIndex($("#card" + id)));
+//    console.log(attributes[id]);
+    if (selectMode === false) {
+        pos = searchId(id);
+        if(attributes[id].open && checkIncreasement(pos)) {
+            setDownBordered(pos);
+            selectMode = true;
+        }
+    } else {
+        var toNumber = attributes[id].number;
+        var fromId = matrix[pos.x][pos.y];
+        var fromNumber = attributes[fromId].number;
+        
+        cancelAllSelected(pos);
+        var tox = searchId(id).x;
+        
+        if(attributes[id].select === true || attributes[id].open === false|| 
+           pos.x === tox || toNumber !== fromNumber + 1) {
+            ;
+        } else {
+            var cppos = pos;
+            moveAnime(cppos.x, searchId(id).x, matrix[cppos.x].length - cppos.y, function(){
+                // check open
+                checkOpenAndShow(cppos.x);
+                // remove 1~13
+                if(checkThirteen(matrix[tox]) === true) {
+                    var i = matrix[tox].length - 1;
+                    for(var k = 0; k < 13; k++) {
+                        var id = matrix[tox][i];
+                        var card = $("#card" + id);
+                        card.fadeOut(1000, k === 12? function(){/* check open */checkOpenAndShow(tox); if(checkWin()) win();}: function(){});
+                        i--;
+                    }
+                    matrix[tox].splice(matrix[tox].length - 13, 13);
+                }
+            });
+        }
+        pos = null;
+        selectMode = false;
+    }
+}
+
+function checkWin() {
+    for(var i = 0; i < 10; i++)
+        if(matrix[i].length !== 0) return false;
+    return true;
+}
+
+function win() {
+    alert("win");
+}
+
+function fakeCardClickFunction() {
+    var id = parseInt($(this).attr("id").substring(8)) - 10000;
+    console.log(id + "(fake), z-index: " + getZIndex($("#card" + id)));
+    if(selectMode === true) {
+        var fromId = matrix[pos.x][pos.y];
+        var fromNumber = attributes[fromId].number;
+        
+        cancelAllSelected(pos);
+
+        var cppos = pos;
+        moveAnime(cppos.x, id, matrix[cppos.x].length - cppos.y, function(){
+            // check open
+            checkOpenAndShow(cppos.x);
+        });
+        
+        pos = null;
+        selectMode = false;
+    }
+}
+
+function checkOpenAndShow(x) {
+    if(matrix[x].length > 0 && attributes[matrix[x][matrix[x].length - 1]].open === false) {
+        var fromLineLastId = matrix[x][matrix[x].length - 1]
+        var card = $("#card" + fromLineLastId);
+        card.animate({opacity: 0.8}, 150, function() {
+            setNumber(card, attributes[fromLineLastId].number);
+            card.animate({opacity: 1}, 150);
+        });
+        attributes[fromLineLastId].open = true;
+    }
+
+}
+
+function reverseArray(arr) {
+    var i = 0, j = arr.length - 1;
+    while(i < j) {
+        var tp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tp;
+        i++;
+        j--;
+    }
+}
+
+function shuffle(arr) {
+    for(var t = 0; t < 10000; t++) {
+        var i = Math.floor(Math.random() * arr.length);
+        i = parseInt(i);
+        var j = Math.floor(Math.random() * arr.length);
+        j = parseInt(i);
+        var tp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tp;
+    }
+}
+
+function checkThirteen(arr) {
+    console.log("check thirteen");
+    if(arr.length < 13) return false;
+    var cnt = 1;
+    for(var i = arr.length - 1; i >=0 ; i--) {
+        if(attributes[arr[i]].open === false || attributes[arr[i]].number !== cnt) {
+            console.log("return false");
+            return false;
+        }
+        cnt++;
+        if(cnt === 14) break;
+    }
+    console.log("return true");
+    return true;
+}
+
+function searchId(id) {
+    for (var i = 0; i < 10; i++) {
+        for( var j = 0; j < matrix[i].length; j++) 
+            if(matrix[i][j] === id) return {x: i, y: j};
+    }
+}
+
+function getId(card) {
+    return parseInt(card.prop("id").substring(4))
+}
+
+function checkIncreasement(pos) {
+    for(var i = pos.y + 1; i < matrix[pos.x].length; i++) {
+        if(attributes[matrix[pos.x][i]].number !== attributes[matrix[pos.x][i - 1]].number - 1)
+            return false;
+    }
+    return true;
+}
+
+function setDownBordered(pos) {
+    for(var i = pos.y; i < matrix[pos.x].length; i++) {
+        var id = matrix[pos.x][i];
+        var card = $("#card" + id);
+        addBorder(card);
+        attributes[id].select = true;
+    }
+}
+
+function cancelAllSelected(pos) {
+    console.log(pos);
+    for(var i = pos.y; i < matrix[pos.x].length; i++) {
+        var id = matrix[pos.x][i];
+        var card = $("#card" + id);
+        removeBorder(card);
+        attributes[id].select = false;
+    }
+}
+
+function cancelAllSelectedNoArgs() {
+    for(var i = 0; i < 10; i++) {
+        for(var j = 0; j < matrix[i].length; j++) {
+            var id = matrix[i][j];
+            if(attributes[id].select === true) {
+                alert(id);
+                attributes[id].select = false;
+                removeBorder($("#card" + id));
+            }
+        }
+    }
+}
+
+function setZIndex(card, value) {
+    card.css("z-index", "" + value);
+}
+
+function getZIndex(card) {
+    return parseInt(card.css("z-index"));
+}
+
+function cardString(id) {
+    return '<div id="card'+id+'" style="background-color:red; display:block; width:71px; height:96px; position:absolute;"> \
+    <img src="cards.jpg" style="position:absolute; margin:0px; width:auto; overflow:hidden"/> \
+    </div>';
+}
+
+function fakeCardString(id) {
+    return '<div id="fakecard'+id+'" style="background-color:red; display:block; width:67px; height:92px; position:absolute;"> \
+    </div>';
+}
+
+function addBorder(card) {
+    card.css("border", "1px solid yellow");
+    card.css("left", parseInt(card.css("left")) - 1 + "px");
+    card.css("top", parseInt(card.css("top")) - 1 + "px");
+}
+
+function removeBorder(card) {
+    card.css("border", "");
+    card.css("left", parseInt(card.css("left")) + 1 + "px");
+    card.css("top", parseInt(card.css("top")) + 1 + "px");
+}
+
+function setNumber(card, number) {
+    var i = number;
+    var img = card.children("img");
+    img.css("clip", "rect(0, "+(71*i)+", 96, "+(71*i-71));
+    img.css("margin-left", "-"+(71*i-71)+"px");
+}
+
+function setPosition(card, x, y) {
+    card.css("left", x+"px");
+    card.css("top", y+"px");
+}
+
+function moveTo(card, x, y, time, fun) {
+    card.animate({
+       left: x,
+       top: y
+    }, time, fun);
+}
+
+function calculatePosition(x, y) {
+    if(x === -1 && y === -1) return {
+        x: 800, y: 600
+    };
+    return {
+        x: 100 * x + 100, y: 20 * y + 30
+    }
+}
+
+function setPositionIndex(card, x, y) {
+    var pos = calculatePosition(x, y);
+    setPosition(card, pos.x, pos.y);
+}
+
+function moveToIndex(card, x, y, time, fun) {
+    var pos = calculatePosition(x, y);
+    moveTo(card, pos.x, pos.y, time, fun)
+}
+
+function divfloor(x, y) {
+    return parseInt(x / y);
+}
+
+$(document).ready(function() {
+    init();
+    dealAnime(44, 10);
+    // dealAnime(0, 13);
+});
+</script>
