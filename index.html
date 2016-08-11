@@ -118,8 +118,9 @@ function clickFunction() {
         
         cancelAllSelected(pos);
         var tox = searchId(id).x;
+        var toy = searchId(id).y;
         
-        if(attributes[id].select === true || attributes[id].open === false|| 
+        if(attributes[id].select === true || attributes[id].open === false|| toy !== matrix[tox].length - 1 ||
            pos.x === tox || toNumber !== fromNumber + 1) {
             ;
         } else {
@@ -287,13 +288,13 @@ function getZIndex(card) {
 }
 
 function cardString(id) {
-    return '<div id="card'+id+'" style="background-color:red; display:block; width:71px; height:96px; position:absolute;"> \
+    return '<div id="card'+id+'" style="background-color:white; display:block; width:71px; height:96px; position:absolute;"> \
     <img src="cards.jpg" style="position:absolute; margin:0px; width:auto; overflow:hidden"/> \
     </div>';
 }
 
 function fakeCardString(id) {
-    return '<div id="fakecard'+id+'" style="background-color:red; display:block; width:67px; height:92px; position:absolute;"> \
+    return '<div id="fakecard'+id+'" style="background-color:white; display:block; width:67px; height:92px; position:absolute;"> \
     </div>';
 }
 
