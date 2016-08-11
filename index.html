@@ -19,6 +19,8 @@ for(var i = 0; i < 104; i++) {
     attributes[i] = {select: false, number: i % 13 + 1, stage: false, open: false};
 }
 
+shuffle(drop);
+
 // reverseArray(drop);
 var fakeCards = new Array();
 
@@ -43,7 +45,6 @@ function init() {
         setZIndex(fakeCard, 0);
         fakeCard.click(fakeCardClickFunction);
     }
-    console.log(pos);
 }
 
 function deal(n1/*closed*/, n2/*open*/) {
@@ -70,11 +71,11 @@ function dealAnimeRecursion(i, n1, n2, func) {
     setNumber(card, attributes[id].open? attributes[id].number: 14);
     setZIndex(card, y + 1);
     setPositionIndex(card, -1, -1);
-    moveToIndex(card, x, y, /*800*/100, i === n1 + n2 - 1? func: function(){});
+    moveToIndex(card, x, y, 800, i === n1 + n2 - 1? func: function(){});
     
     card.click(clickFunction);
     
-    setTimeout(function() {dealAnimeRecursion(i + 1, n1, n2, func)}, /*150*/100);
+    setTimeout(function() {dealAnimeRecursion(i + 1, n1, n2, func)}, 150);
 }
 
 function dealAnime(n1/*closed*/, n2/*open*/, func) {
@@ -91,7 +92,7 @@ function moveAnimeRecursion(i, fromx, tox, number, func) {
     var newPos = calculatePosition(tox, matrix[tox].length - 1);
     var card = $("#card" + toDeleteId);
     setZIndex(card, matrix[tox].length);
-    moveTo(card, newPos.x, newPos.y, /*500*/0, i === number - 1? func: function(){});
+    moveTo(card, newPos.x, newPos.y, 400, i === number - 1? func: function(){});
     moveAnimeRecursion(i + 1, fromx, tox, number, func);
 }
 
@@ -203,7 +204,7 @@ function shuffle(arr) {
         var i = Math.floor(Math.random() * arr.length);
         i = parseInt(i);
         var j = Math.floor(Math.random() * arr.length);
-        j = parseInt(i);
+        j = parseInt(j);
         var tp = arr[i];
         arr[i] = arr[j];
         arr[j] = tp;
