@@ -371,6 +371,7 @@ function createFireWorksCanvas() {
     canvas.css("height", (e1 - s1) + "px");
     $("body").append(canvas);
     canvas.click(function() {
+        // restart a new game
         matrix = new Array(10);
         drop = new Array();
         attributes = new Array();
@@ -390,7 +391,8 @@ function createFireWorksCanvas() {
         shuffle(drop);
         // reverseArray(drop);
         var fakeCards = new Array();
-        game();
+        init();
+        dealAnime(44, 10);
     });
 }
 
