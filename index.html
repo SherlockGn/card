@@ -482,9 +482,11 @@ function startFireWorks() {
 }
 
 function game() {
-    init();
-    dealAnime(44, 10);
-//    dealAnime(0, 13);
+    img.onload = function() {
+        init();
+        dealAnime(44, 10);
+//      dealAnime(0, 13);
+    }
 }
 
 $(document).ready(game);
