@@ -20,7 +20,6 @@ for(var i = 0; i < 104; i++) {
 }
 
 shuffle(drop);
-
 // reverseArray(drop);
 var fakeCards = new Array();
 
@@ -153,7 +152,8 @@ function checkWin() {
 }
 
 function win() {
-    alert("win");
+    createFireWorksCanvas();
+    startFireWorks();
 }
 
 function fakeCardClickFunction() {
@@ -331,10 +331,10 @@ function moveTo(card, x, y, time, fun) {
 
 function calculatePosition(x, y) {
     if(x === -1 && y === -1) return {
-        x: 800, y: 600
+        x: 800, y: 430
     };
     return {
-        x: 100 * x + 100, y: 20 * y + 30
+        x: 100 * x + 100, y: 15 * y + 30
     }
 }
 
@@ -352,9 +352,135 @@ function divfloor(x, y) {
     return parseInt(x / y);
 }
 
-$(document).ready(function() {
+function createFireWorksCanvas() {
+    var canvas = $("<canvas style='background-color:green; margin:0px; padding:0px; position:absolute;'></canvas>");
+    var ppos = calculatePosition(0, 0);
+    var peos = calculatePosition(9, 0);
+    var s1 = ppos.y + 96 + 45, s2 = ppos.x;
+    var e2 = peos.x + 71;
+    var e1 = calculatePosition(-1, -1).y - 5;
+    
+    canvas.css("top", s1 + "px");
+    canvas.css("left", s2 + "px");
+    canvas.css("width", (e2 - s2) + "px");
+    canvas.css("height", (e1 - s1) + "px");
+    $("body").append(canvas);
+    canvas.click(function() {
+        matrix = new Array(10);
+        drop = new Array();
+        attributes = new Array();
+        selectMode = false;
+        pos = null;
+        for(var i = 0; i < 10; i++) {
+            matrix[i] = new Array();
+        }
+        for(var i = 0; i < 104; i++) {
+            drop[i] = i;
+            attributes[i] = {select: false, number: i % 13 + 1, stage: false, open: false};
+        }
+        
+        canvas.remove();
+        $("div").remove();
+
+        shuffle(drop);
+        // reverseArray(drop);
+        var fakeCards = new Array();
+        game();
+    });
+}
+
+// The code of fireworks is from http://www.oschina.net/code/snippet_1168115_23043
+// the author is "wuhaishuyao", qq: 1696292264
+function startFireWorks() {
+    var c = document.getElementsByTagName('canvas')[0];
+    if (!c.getContext) console.log('unsupported browser version');
+    else(function(c, cvs) {
+        // adjust the canvas by the window size
+        var W, H;
+        var up = 0; (onresize = function() {
+            c.width = W = window.innerWidth;
+            c.height = H = window.innerHeight;
+        })();
+        // generate a firework
+        function createPT(x, y, r, g, b) {
+            return {
+                r: r,g: g,b: b,
+                x: x,y: y,
+                // trace sequence
+                pl: [],
+                dx: rnd(20) - 10,
+                dy: rnd(10) - 7,
+                life: 30 + rnd(30),
+                // moving function, to modify accelerated velocity & coordinate
+                move: function() {
+                    this.dx *= .98;
+                    this.dy *= .98;
+                    this.dy += .42;
+                    this.x += this.dx;
+                    this.y += this.dy;
+                    this.pl.push([this.x, this.y]);
+                    // maintain length of trace
+                    if (this.pl.length > 10) this.pl.shift();
+                    this.life--;
+                }
+            };
+        }
+        // total number of fireworks
+        var B = [];
+        // create a firework in (x, y)
+        function createBoom(x, y) {
+            var q = [],
+            r = rnd(255) | 0,
+            g = rnd(255) | 0,
+            b = rnd(255) | 0;
+            for (var i = 0; i < rnd(6) + 5; i++) q.push(createPT(x, y, r, g, b));
+            B.push(q);
+        }
+        setInterval(function() {
+            cvs.clearRect(0, 0, W, H);
+            // draw fireworks successively
+            for (var n = 0; n < B.length; n++) {
+                var q = B[n];
+                for (var i = 0; i < q.length; i++) {
+                    var pt = q[i];
+                    pt.move();
+                    dq(pt.pl, pt.life / 30, pt.r, pt.g, pt.b);
+                    // a firework will disappear when exceeding lifetime失
+                    if (pt.life <= 0) q.splice(i, 1);
+                }
+                // when number of flowers in a firework becomes 0
+                // the firework will disappear
+                if (!B[n].length) B.splice(n, 1);
+            }
+            // create firework after a period
+            if (new Date - up < 1000 + rnd(2000)) return;
+            up = new Date;
+            createBoom(rnd(W / 2) + W / 4, rnd(50) + 20);
+        },20);
+        function rnd(n) {
+            return (n || 1) * Math.random();
+        }
+        function dq(ar, z, r, g, b) {
+            cvs.save();
+            // draw trace
+            for (var i = 0; i < ar.length; i++) {
+                cvs.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + Math.abs(.2 * z) + ')';
+                cvs.lineWidth = Math.min(i + 1, 4) * 2;
+                cvs.beginPath();
+                cvs.moveTo(ar[i][0], ar[i][1]);
+                for (var j = i + 1; j < ar.length; j++) cvs.lineTo(ar[j][0], ar[j][1]);
+                cvs.stroke();
+            }
+            cvs.restore();
+        }
+    })(c, c.getContext('2d'));
+}
+
+function game() {
     init();
     dealAnime(44, 10);
-    // dealAnime(0, 13);
-});
+//    dealAnime(0, 13);
+}
+
+$(document).ready(game);
 </script>
