@@ -294,7 +294,7 @@ function getZIndex(card) {
 
 function cardString(id) {
     return '<div id="card'+id+'" style="background-color:white; display:block; width:71px; height:96px; position:absolute;"> \
-    <img src="cards.jpg" style="position:absolute; margin:0px; width:auto; overflow:hidden"/> \
+    <img style="position:absolute; margin:0px; width:71px; height:96px; overflow:hidden"/> \
     </div>';
 }
 
@@ -318,8 +318,7 @@ function removeBorder(card) {
 function setNumber(card, number) {
     var i = number;
     var img = card.children("img");
-    img.css("clip", "rect(0, "+(71*i)+", 96, "+(71*i-71));
-    img.css("margin-left", "-"+(71*i-71)+"px");
+    img.css("background", "url(\"cards.jpg\") -" + (71*i-71) + "px 0");
 }
 
 function setPosition(card, x, y) {
